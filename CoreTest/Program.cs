@@ -7,6 +7,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace CoreTest
 {
@@ -17,13 +18,21 @@ namespace CoreTest
             BuildWebHost(args).Run();
         }
 
-        public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseKestrel()
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseIISIntegration()
-                .UseUrls("http://localhost:5000")
-                .UseStartup<Startup>()
-                .Build();
+        public static IWebHost BuildWebHost(string[] args)
+        {
+            IPHostEntry fromHE = Dns.GetHostEntry(Dns.GetHostName());
+            string[] urls = new string[fromHE.AddressList.Length];
+            for(int i=0;i<fromHE.AddressList.Length;i++)
+            {
+                urls[i] = string.Format("http://{0}:{1}", fromHE.AddressList[i], 5000);
+            }
+            return WebHost.CreateDefaultBuilder(args)
+                     .UseKestrel()
+                     .UseContentRoot(Directory.GetCurrentDirectory())
+                     .UseIISIntegration()
+                     .UseUrls(urls)
+                     .UseStartup<Startup>()
+                     .Build();
+        }
     }
 }
